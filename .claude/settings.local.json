@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx next build)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(node -e \"const l = require\\(''lucide-react''\\); console.log\\(''Sim:'', !!l.Sim\\); console.log\\(''Smartphone:'', !!l.Smartphone\\); console.log\\(''Watch:'', !!l.Watch\\); console.log\\(''SimCard:'', !!l.SimCard\\); console.log\\(''CreditCard:'', !!l.CreditCard\\); console.log\\(''Wifi:'', !!l.Wifi\\); console.log\\(''Signal:'', !!l.Signal\\);\")",
+      "Bash(for icon in LayoutDashboard Watch Laptop Smartphone ShoppingCart Tags Bell Users UserCircle)",
+      "Bash(do echo -n \"$icon: \")",
+      "Bash(done)",
+      "Bash(npx tsc --noEmit --pretty)",
+      "Bash(npm install pusher-js)",
+      "Bash(taskkill //F //IM \"node.exe\")"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g id="Group_7388" data-name="Group 7388" transform="translate(-4108 -303)">
+    <rect id="Rectangle_720" data-name="Rectangle 720" width="24" height="24" transform="translate(4108 303)" fill="none"/>
+    <g id="Group_7387" data-name="Group 7387" transform="translate(0.187 0.648)">
+      <path id="パス_302" data-name="パス 302" d="M34.569,32.031H31.313a.717.717,0,1,1,0-1.434h2.538V22.013a5.249,5.249,0,0,0-2.067-3.634,12.013,12.013,0,0,0-3.819-1.694h-5.4a12.014,12.014,0,0,0-3.819,1.694,5.249,5.249,0,0,0-2.067,3.634V30.6h2.538a.717.717,0,1,1,0,1.434H15.967a.717.717,0,0,1-.717-.717v-9.3a6.612,6.612,0,0,1,2.583-4.736,13.611,13.611,0,0,1,4.471-2,.717.717,0,0,1,.174-.021h5.58a.717.717,0,0,1,.174.021,13.612,13.612,0,0,1,4.471,2,6.612,6.612,0,0,1,2.583,4.736v9.3A.717.717,0,0,1,34.569,32.031Z" transform="translate(4094.545 289)" fill="#9ca3af"/>
+      <path id="Path_303" data-name="Path 303" d="M56.091,22.046V34.6H44V22.046M52.836,16a2.79,2.79,0,1,1-5.58,0" transform="translate(4069.768 288.967)" fill="none" stroke="#9ca3af" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+    </g>
+  </g>
+</svg>

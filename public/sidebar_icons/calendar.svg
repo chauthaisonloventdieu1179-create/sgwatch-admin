@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g id="Group_7379" data-name="Group 7379" transform="translate(-4068 -123)">
+    <g id="Group_7376" data-name="Group 7376" transform="translate(4068 123)">
+      <rect id="Rectangle_5" data-name="Rectangle 5" width="24" height="24" fill="none"/>
+    </g>
+    <line id="Line_196" data-name="Line 196" y2="12" transform="translate(4080 132)" fill="none" stroke="#9ca3af" stroke-width="1.2"/>
+    <g id="Group_7378" data-name="Group 7378">
+      <path id="calendar_icon" data-name="calendar icon" d="M6.75,3V5.25M17.25,3V5.25M3,18.75V7.5A2.25,2.25,0,0,1,5.25,5.25h13.5A2.25,2.25,0,0,1,21,7.5V18.75m-18,0A2.25,2.25,0,0,0,5.25,21h13.5A2.25,2.25,0,0,0,21,18.75m-18,0v-7.5A2.25,2.25,0,0,1,5.25,9h13.5A2.25,2.25,0,0,1,21,11.25v7.5" transform="translate(4068 123)" fill="none" stroke="#9ca3af" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+      <g id="Group_7377" data-name="Group 7377" transform="translate(15 9.5)">
+        <line id="Line_194" data-name="Line 194" x2="5" transform="translate(4058 128.5)" fill="none" stroke="#9ca3af" stroke-linecap="round" stroke-width="1.2"/>
+        <line id="Line_195" data-name="Line 195" y2="5" transform="translate(4060.5 126)" fill="none" stroke="#9ca3af" stroke-linecap="round" stroke-width="1.2"/>
+      </g>
+      <line id="Line_197" data-name="Line 197" x2="5" transform="translate(4082 138)" fill="none" stroke="#9ca3af" stroke-linecap="round" stroke-width="1.2"/>
+    </g>
+  </g>
+</svg>

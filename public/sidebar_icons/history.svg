@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g id="Group_7375" data-name="Group 7375" transform="translate(-4053 -230)">
+    <rect id="Rectangle_717" data-name="Rectangle 717" width="24" height="24" transform="translate(4053 230)" fill="none"/>
+    <g id="counter-clockwise-clock" transform="translate(4042.338 221.145)">
+      <g id="Group_7374" data-name="Group 7374" transform="translate(12.8 10.88)">
+        <path id="Path_298" data-name="Path 298" d="M31.025,20.855A8.434,8.434,0,0,0,22.55,12.38c-4.167,0-6.228,3.084-7.105,4.725H18.05a.75.75,0,1,1,0,1.5h-4.5a.75.75,0,0,1-.75-.75v-4.5a.75.75,0,0,1,1.5,0v2.719a9.4,9.4,0,0,1,8.25-5.194,9.975,9.975,0,1,1,0,19.95,9.762,9.762,0,0,1-7.072-2.913,10.158,10.158,0,0,1-2.14-3.25.75.75,0,1,1,1.387-.57,8.631,8.631,0,0,0,1.824,2.769,8.249,8.249,0,0,0,6,2.464A8.434,8.434,0,0,0,31.025,20.855ZM22.55,15.6a.75.75,0,0,1,.75.75v4.189l2.781,2.779a.751.751,0,1,1-1.062,1.062l-3-3a.75.75,0,0,1-.219-.531v-4.5A.75.75,0,0,1,22.55,15.6Z" transform="translate(-12.8 -10.88)" fill="#9ca3af" fill-rule="evenodd"/>
+      </g>
+    </g>
+  </g>
+</svg>
