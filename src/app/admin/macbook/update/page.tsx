@@ -1,9 +1,11 @@
 "use client";
-import Create from "@/components/admin/clock/create";
+import Create from "@/components/admin/macbook/create";
 import { Spin } from "antd";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
-const MacbookUpdatePage = () => {
+
+const MacbookUpdateContent = () => {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [productId, setProductId] = useState<string>("");
@@ -25,15 +27,16 @@ const MacbookUpdatePage = () => {
           <Spin size="large" />
         </div>
       )}
-      {!loading && (
-        <Create
-          id={productId}
-          defaultCategoryId="17"
-          pageTitle="Quản lý Macbook"
-          routePrefix="/admin/macbook"
-        />
-      )}
+      {!loading && <Create id={productId} />}
     </>
+  );
+};
+
+const MacbookUpdatePage = () => {
+  return (
+    <Suspense>
+      <MacbookUpdateContent />
+    </Suspense>
   );
 };
 export default MacbookUpdatePage;

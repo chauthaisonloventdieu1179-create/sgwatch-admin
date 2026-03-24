@@ -1,12 +1,6 @@
 "use client";
-import Create from "@/components/admin/clock/create";
+import Create from "@/components/admin/macbook/create";
 const MacbookCreatePage = () => {
-  return (
-    <Create
-      defaultCategoryId="17"
-      pageTitle="Quản lý Macbook"
-      routePrefix="/admin/macbook"
-    />
-  );
+  return <Create />;
 };
 export default MacbookCreatePage;

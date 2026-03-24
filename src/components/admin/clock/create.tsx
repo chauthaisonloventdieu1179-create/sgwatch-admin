@@ -55,7 +55,6 @@ const Create = ({
   const [categoryId, setCategoryId] = useState<string | undefined>(
     defaultCategoryId,
   );
-  const [shortDescription, setShortDescription] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [priceJpy, setPriceJpy] = useState<string>("");
   const [originalPriceJpy, setOriginalPriceJpy] = useState<string>("");
@@ -69,6 +68,7 @@ const Create = ({
   const [isDomestic, setIsDomestic] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<string | undefined>(undefined);
   const [costPriceJpy, setCostPriceJpy] = useState<string>("");
+  const [warrantyMonths, setWarrantyMonths] = useState<string>("");
   const [productInfo, setProductInfo] = useState<string>("");
   const [dealInfo, setDealInfo] = useState<string>("");
   const [thongSoKyThuat, setThongSoKyThuat] = useState<string>("");
@@ -90,10 +90,8 @@ const Create = ({
   });
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
 
-  // Nén ảnh trước khi upload - target ~300KB
   const compressImage = (file: File, maxSizeKB = 300): Promise<File> => {
     return new Promise((resolve) => {
-      // Nếu file đã nhỏ hơn target thì không cần nén
       if (file.size <= maxSizeKB * 1024) {
         resolve(file);
         return;
@@ -102,8 +100,6 @@ const Create = ({
       img.onload = () => {
         const canvas = document.createElement("canvas");
         let { width, height } = img;
-
-        // Giảm kích thước nếu quá lớn (max 1600px)
         const MAX_DIM = 1600;
         if (width > MAX_DIM || height > MAX_DIM) {
           if (width > height) {
@@ -114,13 +110,10 @@ const Create = ({
             height = MAX_DIM;
           }
         }
-
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d")!;
         ctx.drawImage(img, 0, 0, width, height);
-
-        // Thử nén với quality giảm dần cho đến khi đạt target
         let quality = 0.7;
         const tryCompress = () => {
           canvas.toBlob(
@@ -202,16 +195,13 @@ const Create = ({
           const response = await sendRequest<IClockProductDetailResponse>({
             url: `/admin/shop/products/${id}`,
             method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           });
           const p = response.data.product;
           setName(p.name);
           setSku(p.sku);
           setBrandId(p.brand?.id?.toString());
           setCategoryId(p.category?.id?.toString());
-          setShortDescription(p.short_description || "");
           setDescription(p.description || "");
           setPriceJpy(p.price_jpy || "");
           setOriginalPriceJpy(p.original_price_jpy || "");
@@ -222,19 +212,16 @@ const Create = ({
           setStockType(p.stock_type || undefined);
           setIsDomestic(
             p.is_domestic !== null && p.is_domestic !== undefined
-              ? p.is_domestic
-                ? "1"
-                : "0"
+              ? p.is_domestic ? "1" : "0"
               : undefined,
           );
           setIsNew(
             p.is_new !== null && p.is_new !== undefined
-              ? p.is_new
-                ? "1"
-                : "0"
+              ? p.is_new ? "1" : "0"
               : undefined,
           );
           setCostPriceJpy(p.cost_price_jpy || "");
+          setWarrantyMonths(p.warranty_months?.toString() || "");
           setProductInfo(p.product_info || "");
           setDealInfo(p.deal_info || "");
           setThongSoKyThuat(p.attributes?.thong_so_ky_thuat || "");
@@ -274,10 +261,7 @@ const Create = ({
   const handleSubmit = async () => {
     setLoading(true);
     setServerErrors({});
-    const newErrors = {
-      name: !name,
-      sku: !sku,
-    };
+    const newErrors = { name: !name, sku: !sku };
     setErrors(newErrors);
     if (newErrors.name || newErrors.sku) {
       setLoading(false);
@@ -289,12 +273,9 @@ const Create = ({
     formData.append("sku", sku);
     if (categoryId) formData.append("category_id", categoryId);
     if (brandId) formData.append("brand_id", brandId);
-    if (shortDescription)
-      formData.append("short_description", shortDescription);
     if (description) formData.append("description", description);
     if (priceJpy) formData.append("price_jpy", priceJpy);
-    if (originalPriceJpy)
-      formData.append("original_price_jpy", originalPriceJpy);
+    if (originalPriceJpy) formData.append("original_price_jpy", originalPriceJpy);
     if (points) formData.append("points", points);
     if (gender) formData.append("gender", gender);
     if (movementType) formData.append("movement_type", movementType);
@@ -303,10 +284,10 @@ const Create = ({
     if (isDomestic !== undefined) formData.append("is_domestic", isDomestic);
     if (isNew !== undefined) formData.append("is_new", isNew);
     if (costPriceJpy) formData.append("cost_price_jpy", costPriceJpy);
+    if (warrantyMonths) formData.append("warranty_months", warrantyMonths);
     if (productInfo) formData.append("product_info", productInfo);
     if (dealInfo) formData.append("deal_info", dealInfo);
-    if (thongSoKyThuat)
-      formData.append("attributes[thong_so_ky_thuat]", thongSoKyThuat);
+    if (thongSoKyThuat) formData.append("attributes[thong_so_ky_thuat]", thongSoKyThuat);
     if (id && existingImages.length > 0) {
       existingImages.forEach((img) => {
         formData.append("existing_image_ids[]", String(img.id));
@@ -322,9 +303,7 @@ const Create = ({
         : `${process.env.NEXT_PUBLIC_API_URL}/admin/shop/products`;
       const res = await fetch(url, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
       if (!res.ok) {
@@ -444,18 +423,6 @@ const Create = ({
                   </div>
                   <div className="w-full">
                     <label className="text-[14px] font-[400] text-[#000000]">
-                      Mô tả ngắn
-                    </label>
-                    <TextArea
-                      value={shortDescription}
-                      onChange={(e) => setShortDescription(e.target.value)}
-                      placeholder="Nhập mô tả ngắn"
-                      rows={2}
-                      className="w-full text-[14px] mt-[8px] font-[400] text-[#212222] placeholder:text-[#9E9E9E]"
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label className="text-[14px] font-[400] text-[#000000]">
                       Mô tả chi tiết
                     </label>
                     <TextArea
@@ -537,6 +504,19 @@ const Create = ({
                         value={movementType}
                         onChange={(value) => setMovementType(value)}
                         options={MOVEMENT_TYPES}
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full flex gap-[20px]">
+                    <div className="w-[50%]">
+                      <label className="text-[14px] font-[400] text-[#000000]">
+                        Bảo hành (tháng)
+                      </label>
+                      <Input
+                        value={warrantyMonths}
+                        onChange={(e) => setWarrantyMonths(e.target.value)}
+                        placeholder="Nhập số tháng bảo hành"
+                        className="h-[32px] w-full text-[14px] mt-[8px] font-[400] text-[#212222] placeholder:text-[#9E9E9E]"
                       />
                     </div>
                   </div>

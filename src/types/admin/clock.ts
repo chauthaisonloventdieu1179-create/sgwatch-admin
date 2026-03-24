@@ -25,6 +25,14 @@ export interface IClockProduct {
     glass_material?: string;
     water_resistance?: string;
     thong_so_ky_thuat?: string;
+    year?: string;
+    color?: string;
+    security?: string;
+    battery?: string;
+    gpu?: string;
+    ports?: string;
+    target_customer?: string;
+    design?: string;
   } | null;
   stock_quantity: number;
   stock_type: string | null;

@@ -1,9 +1,11 @@
 "use client";
-import Create from "@/components/admin/clock/create";
+import Create from "@/components/admin/laptop/create";
 import { Spin } from "antd";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
-const LaptopUpdatePage = () => {
+
+const LaptopUpdateContent = () => {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [productId, setProductId] = useState<string>("");
@@ -25,15 +27,16 @@ const LaptopUpdatePage = () => {
           <Spin size="large" />
         </div>
       )}
-      {!loading && (
-        <Create
-          id={productId}
-          defaultCategoryId="16"
-          pageTitle="Quản lý Laptop"
-          routePrefix="/admin/laptop"
-        />
-      )}
+      {!loading && <Create id={productId} />}
     </>
+  );
+};
+
+const LaptopUpdatePage = () => {
+  return (
+    <Suspense>
+      <LaptopUpdateContent />
+    </Suspense>
   );
 };
 export default LaptopUpdatePage;

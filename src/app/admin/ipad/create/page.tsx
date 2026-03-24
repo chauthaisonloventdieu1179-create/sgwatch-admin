@@ -1,12 +1,6 @@
 "use client";
-import Create from "@/components/admin/clock/create";
+import Create from "@/components/admin/ipad/create";
 const IpadCreatePage = () => {
-  return (
-    <Create
-      defaultCategoryId="19"
-      pageTitle="Quản lý iPad"
-      routePrefix="/admin/ipad"
-    />
-  );
+  return <Create />;
 };
 export default IpadCreatePage;

@@ -1,9 +1,11 @@
 "use client";
-import Create from "@/components/admin/clock/create";
+import Create from "@/components/admin/ipad/create";
 import { Spin } from "antd";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
-const IpadUpdatePage = () => {
+
+const IpadUpdateContent = () => {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [productId, setProductId] = useState<string>("");
@@ -25,15 +27,16 @@ const IpadUpdatePage = () => {
           <Spin size="large" />
         </div>
       )}
-      {!loading && (
-        <Create
-          id={productId}
-          defaultCategoryId="19"
-          pageTitle="Quản lý iPad"
-          routePrefix="/admin/ipad"
-        />
-      )}
+      {!loading && <Create id={productId} />}
     </>
+  );
+};
+
+const IpadUpdatePage = () => {
+  return (
+    <Suspense>
+      <IpadUpdateContent />
+    </Suspense>
   );
 };
 export default IpadUpdatePage;
