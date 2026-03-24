@@ -10,6 +10,7 @@ const LaptopPage = () => {
         pageDescription="Xem danh sách sản phẩm laptop."
         routePrefix="/admin/laptop"
         filterMode="keyword-brand"
+        importApiPath="/admin/shop/products/import-computers"
       />
     </Suspense>
   );

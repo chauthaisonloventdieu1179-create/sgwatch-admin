@@ -42,6 +42,38 @@ const BigSaleCreate = ({ id }: CreateProps) => {
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Nén ảnh trước khi upload - target ~300KB
+  const compressImage = (file: File, maxSizeKB = 300): Promise<File> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith("image") || file.size <= maxSizeKB * 1024) { resolve(file); return; }
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img;
+        const MAX_DIM = 1600;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) { height = Math.round((height * MAX_DIM) / width); width = MAX_DIM; }
+          else { width = Math.round((width * MAX_DIM) / height); height = MAX_DIM; }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        let quality = 0.7;
+        const tryCompress = () => {
+          canvas.toBlob((blob) => {
+            if (!blob) { resolve(file); return; }
+            if (blob.size > maxSizeKB * 1024 && quality > 0.1) { quality -= 0.1; tryCompress(); }
+            else { resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() })); }
+          }, "image/jpeg", quality);
+        };
+        tryCompress();
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   useEffect(() => {
     if (id) {
       const fetchDetail = async () => {
@@ -139,14 +171,16 @@ const BigSaleCreate = ({ id }: CreateProps) => {
     setSaleProducts((prev) => prev.filter((p) => p.id !== productId));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Revoke old preview URL to free memory
       if (mediaPreview) URL.revokeObjectURL(mediaPreview);
-      setMediaFile(file);
-      setMediaType(file.type.startsWith("video") ? "video" : "image");
-      setMediaPreview(URL.createObjectURL(file));
+      const isVideo = file.type.startsWith("video");
+      const processed = isVideo ? file : await compressImage(file);
+      setMediaFile(processed);
+      setMediaType(isVideo ? "video" : "image");
+      setMediaPreview(URL.createObjectURL(processed));
     }
   };
 

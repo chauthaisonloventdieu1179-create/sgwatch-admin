@@ -10,6 +10,7 @@ const IpadPage = () => {
         pageDescription="Xem danh sách sản phẩm iPad."
         routePrefix="/admin/ipad"
         filterMode="keyword-only"
+        importApiPath="/admin/shop/products/import-ipads"
       />
     </Suspense>
   );

@@ -47,6 +47,7 @@ interface ProductListProps {
   pageDescription?: string;
   routePrefix?: string;
   filterMode?: "full" | "keyword-brand" | "keyword-only";
+  importApiPath?: string;
 }
 
 const ClockList = ({
@@ -55,6 +56,7 @@ const ClockList = ({
   pageDescription = "Xem danh sách sản phẩm đồng hồ.",
   routePrefix = "/admin/clock",
   filterMode = "full",
+  importApiPath = "/admin/shop/products/import",
 }: ProductListProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -123,20 +125,24 @@ const ClockList = ({
   };
 
   const handleImportSubmit = async () => {
-    if (!importBrandId || !importFile) {
+    if (filterMode === "full" && !importBrandId) {
       message.warning("Vui lòng chọn thương hiệu và file Excel");
+      return;
+    }
+    if (!importFile) {
+      message.warning("Vui lòng chọn file Excel");
       return;
     }
     const token = getToken();
     const formData = new FormData();
     formData.append("file", importFile);
-    formData.append("brand_id", importBrandId);
+    if (importBrandId) formData.append("brand_id", importBrandId);
     formData.append("category_id", categoryId);
 
     try {
       setImportLoading(true);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/shop/products/import`,
+        `${process.env.NEXT_PUBLIC_API_URL}${importApiPath}`,
         {
           method: "POST",
           headers: {
@@ -827,22 +833,24 @@ const ClockList = ({
         onCancel={() => setShowImportModal(false)}
         onOk={handleImportSubmit}
         confirmLoading={importLoading}
-        okButtonProps={{ disabled: !importBrandId || !importFile }}
+        okButtonProps={{ disabled: (filterMode === "full" && !importBrandId) || !importFile }}
       >
         <div className="flex flex-col gap-[16px] mt-[16px]">
-          <div className="flex flex-col gap-[6px]">
-            <span className="text-[13px] font-medium text-[#0D1526]">
-              Thương hiệu <span className="text-red-500">*</span>
-            </span>
-            <Select
-              allowClear
-              placeholder="Chọn thương hiệu"
-              className="h-[36px] w-full"
-              value={importBrandId}
-              onChange={(value) => setImportBrandId(value)}
-              options={brandOptions}
-            />
-          </div>
+          {filterMode === "full" && (
+            <div className="flex flex-col gap-[6px]">
+              <span className="text-[13px] font-medium text-[#0D1526]">
+                Thương hiệu <span className="text-red-500">*</span>
+              </span>
+              <Select
+                allowClear
+                placeholder="Chọn thương hiệu"
+                className="h-[36px] w-full"
+                value={importBrandId}
+                onChange={(value) => setImportBrandId(value)}
+                options={brandOptions}
+              />
+            </div>
+          )}
           <div className="flex flex-col gap-[6px]">
             <span className="text-[13px] font-medium text-[#0D1526]">
               Danh mục

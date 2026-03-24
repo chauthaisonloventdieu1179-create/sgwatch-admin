@@ -90,6 +90,64 @@ const Create = ({
   });
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
 
+  // Nén ảnh trước khi upload - target ~300KB
+  const compressImage = (file: File, maxSizeKB = 300): Promise<File> => {
+    return new Promise((resolve) => {
+      // Nếu file đã nhỏ hơn target thì không cần nén
+      if (file.size <= maxSizeKB * 1024) {
+        resolve(file);
+        return;
+      }
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img;
+
+        // Giảm kích thước nếu quá lớn (max 1600px)
+        const MAX_DIM = 1600;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Thử nén với quality giảm dần cho đến khi đạt target
+        let quality = 0.7;
+        const tryCompress = () => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) { resolve(file); return; }
+              if (blob.size > maxSizeKB * 1024 && quality > 0.1) {
+                quality -= 0.1;
+                tryCompress();
+              } else {
+                const compressed = new File([blob], file.name, {
+                  type: "image/jpeg",
+                  lastModified: Date.now(),
+                });
+                resolve(compressed);
+              }
+            },
+            "image/jpeg",
+            quality,
+          );
+        };
+        tryCompress();
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const fetchBrands = async () => {
     try {
       const token = getToken();
@@ -195,10 +253,13 @@ const Create = ({
     }
   }, [id]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      setImages((prev) => [...prev, ...Array.from(files)]);
+      const compressed = await Promise.all(
+        Array.from(files).map((file) => compressImage(file)),
+      );
+      setImages((prev) => [...prev, ...compressed]);
     }
   };
 

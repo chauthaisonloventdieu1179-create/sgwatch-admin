@@ -10,6 +10,7 @@ const MacbookPage = () => {
         pageDescription="Xem danh sách sản phẩm Macbook."
         routePrefix="/admin/macbook"
         filterMode="keyword-only"
+        importApiPath="/admin/shop/products/import-computers"
       />
     </Suspense>
   );
