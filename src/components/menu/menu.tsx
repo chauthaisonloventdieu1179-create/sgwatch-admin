@@ -64,12 +64,12 @@ const navigation: NavigationItem[] = [
     href: "/admin/laptop/",
     icon: Laptop,
   },
-  {
-    key: "sim",
-    name: "Danh sách sim",
-    href: "/admin/sim/",
-    icon: Smartphone,
-  },
+  // {
+  //   key: "sim",
+  //   name: "Danh sách sim",
+  //   href: "/admin/sim/",
+  //   icon: Smartphone,
+  // },
   {
     key: "macbook",
     name: "Danh sách Macbook",
@@ -174,7 +174,7 @@ const HomeMenuSideBar = () => {
   }, [fetchUnreadCount]);
   useEffect(() => {
     const currentItem = navigation.find((item) =>
-      pathname.startsWith(item.href)
+      pathname.startsWith(item.href),
     );
     if (currentItem) {
       setCurrentTab(currentItem.key);
@@ -203,7 +203,7 @@ const HomeMenuSideBar = () => {
                         currentTab === item.key
                           ? "bg-[#212222] text-white"
                           : "text-[#0D1526] hover:bg-[#212222]",
-                        "group flex gap-x-3 pl-[15px] p-2 text-sm leading-6 font-semibold font-source-han-sans-jp text-[14px] rounded-[12px]"
+                        "group flex gap-x-3 pl-[15px] p-2 text-sm leading-6 font-semibold font-source-han-sans-jp text-[14px] rounded-[12px]",
                       )}
                     >
                       <div className="w-[24px] flex justify-center items-center">
@@ -211,7 +211,9 @@ const HomeMenuSideBar = () => {
                           size={20}
                           className={classNames(
                             "shrink-0 group-hover:text-white",
-                            currentTab === item.key ? "text-white" : "text-[#0D1526]"
+                            currentTab === item.key
+                              ? "text-white"
+                              : "text-[#0D1526]",
                           )}
                         />
                       </div>

@@ -6,8 +6,8 @@ import { IBrandsResponse } from "@/types/admin/brand";
 import { sendRequest } from "@/utils/api";
 import { Checkbox, Input, Modal, Select, Spin } from "antd";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { message } from "antd";
 import ConfirmDelete from "@/components/popup/popup.delete";
 
@@ -57,27 +57,41 @@ const ClockList = ({
   filterMode = "full",
 }: ProductListProps) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Đọc search params từ URL khi mount
   const [products, setProducts] = useState<IClockProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => Number(searchParams.get("page")) || 1);
   const [totalPages, setTotalPages] = useState(1);
   const [perPage] = useState(50);
-  const [keyword, setKeyword] = useState<string>("");
-  const [brandId, setBrandId] = useState<string | undefined>(undefined);
+  const [keyword, setKeyword] = useState<string>(() => searchParams.get("keyword") || "");
+  const [brandId, setBrandId] = useState<string | undefined>(() => searchParams.get("brand_id") || undefined);
   const [movementType, setMovementType] = useState<string | undefined>(
-    undefined,
+    () => searchParams.get("movement_type") || undefined,
   );
-  const [stockType, setStockType] = useState<string | undefined>(undefined);
-  const [gender, setGender] = useState<string | undefined>(undefined);
-  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
-  const [isDomestic, setIsDomestic] = useState<string | undefined>(undefined);
-  const [isNew, setIsNew] = useState<string | undefined>(undefined);
+  const [stockType, setStockType] = useState<string | undefined>(() => searchParams.get("stock_type") || undefined);
+  const [gender, setGender] = useState<string | undefined>(() => searchParams.get("gender") || undefined);
+  const [sortBy, setSortBy] = useState<string | undefined>(() => searchParams.get("sort_by") || undefined);
+  const [isDomestic, setIsDomestic] = useState<string | undefined>(() => searchParams.get("is_domestic") || undefined);
+  const [isNew, setIsNew] = useState<string | undefined>(() => searchParams.get("is_new") || undefined);
 
   const [brandOptions, setBrandOptions] = useState<
     { value: string; label: string }[]
   >([]);
 
-  const [sortByOrder, setSortByOrder] = useState(false);
+  const [sortByOrder, setSortByOrder] = useState(() => searchParams.get("sort_by_order") === "1");
+
+  // Ghi search params vào URL
+  const pushSearchParams = useCallback((params: Record<string, string | undefined>, page: number) => {
+    const sp = new URLSearchParams();
+    if (page > 1) sp.set("page", String(page));
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) sp.set(key, value);
+    });
+    const qs = sp.toString();
+    router.replace(`${routePrefix}/${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [router, routePrefix]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [idDelete, setIdDelete] = useState<number | null>(null);
@@ -172,6 +186,7 @@ const ClockList = ({
   }, []);
 
   useEffect(() => {
+    pushSearchParams(getCurrentFilterParams(), currentPage);
     fetchData(currentPage);
   }, [currentPage]);
 
@@ -214,8 +229,21 @@ const ClockList = ({
     }
   };
 
+  const getCurrentFilterParams = () => ({
+    keyword: keyword || undefined,
+    brand_id: brandId,
+    movement_type: movementType,
+    stock_type: stockType,
+    gender: gender,
+    sort_by: sortByOrder ? "display_order" : sortBy,
+    is_domestic: isDomestic,
+    is_new: isNew,
+    sort_by_order: sortByOrder ? "1" : undefined,
+  });
+
   const handleSearch = () => {
     setCurrentPage(1);
+    pushSearchParams(getCurrentFilterParams(), 1);
     fetchData(1);
   };
 
@@ -230,6 +258,8 @@ const ClockList = ({
     setIsNew(undefined);
     setSortByOrder(false);
     setCurrentPage(1);
+    // Xóa tất cả search params trên URL
+    router.replace(`${routePrefix}/`, { scroll: false });
     try {
       setLoading(true);
       const token = getToken();
