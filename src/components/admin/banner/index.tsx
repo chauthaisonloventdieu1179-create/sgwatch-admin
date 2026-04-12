@@ -3,7 +3,7 @@ import { getToken } from "@/api/ServerActions";
 import Pagination from "@/components/pagination/pagination";
 import { IBanner, IBannersResponse } from "@/types/admin/users";
 import { sendRequest } from "@/utils/api";
-import { Spin, message } from "antd";
+import { Input, Spin, message } from "antd";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import ConfirmDelete from "@/components/popup/popup.delete";
@@ -59,6 +59,7 @@ const BannerList = () => {
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [editBannerId, setEditBannerId] = useState<number | null>(null);
+  const [uploadLink, setUploadLink] = useState<string>("");
   const [cacheKey, setCacheKey] = useState(Date.now());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -94,13 +95,16 @@ const BannerList = () => {
     setEditBannerId(null);
     setUploadFile(null);
     setUploadPreview(null);
+    setUploadLink("");
     setShowUploadModal(true);
   };
 
   const handleOpenEdit = (id: number) => {
+    const banner = banners.find((b) => b.id === id);
     setEditBannerId(id);
     setUploadFile(null);
-    setUploadPreview(null);
+    setUploadPreview(banner?.media_url || null);
+    setUploadLink(banner?.link || "");
     setShowUploadModal(true);
   };
 
@@ -114,7 +118,7 @@ const BannerList = () => {
   };
 
   const handleUploadSubmit = async () => {
-    if (!uploadFile) {
+    if (!editBannerId && !uploadFile) {
       message.warning("Vui lòng chọn ảnh!");
       return;
     }
@@ -122,7 +126,8 @@ const BannerList = () => {
       setUploading(true);
       const token = getToken();
       const formData = new FormData();
-      formData.append("media", uploadFile);
+      if (uploadFile) formData.append("media", uploadFile);
+      if (uploadLink) formData.append("link", uploadLink);
 
       const url = editBannerId
         ? `${BASE_URL}/admin/banners/${editBannerId}`
@@ -144,6 +149,7 @@ const BannerList = () => {
         setShowUploadModal(false);
         setUploadFile(null);
         setUploadPreview(null);
+        setUploadLink("");
         setEditBannerId(null);
         setCacheKey(Date.now());
         fetchData(currentPage);
@@ -162,6 +168,7 @@ const BannerList = () => {
     setShowUploadModal(false);
     setUploadFile(null);
     setUploadPreview(null);
+    setUploadLink("");
     setEditBannerId(null);
   };
 
@@ -257,35 +264,40 @@ const BannerList = () => {
                           </div>
                         )}
                       </div>
-                      <div className="p-[12px] flex justify-between items-center">
-                        <div className="text-[13px] font-medium text-[#212222]">
-                          Banner #{(currentPage - 1) * perPage + index + 1}
-                        </div>
-                        <div className="flex gap-[8px]">
-                          <div
-                            onClick={() => handleOpenEdit(item.id)}
-                            className="cursor-pointer w-[50px] h-[28px] flex justify-center items-center bg-[#212222] text-white text-[11px] rounded-[6px] hover:scale-105 transition-all duration-200"
-                          >
-                            Sửa
+                      <div className="p-[12px] flex flex-col gap-[6px]">
+                        <div className="flex justify-between items-center">
+                          <div className="text-[13px] font-medium text-[#212222]">
+                            Banner #{(currentPage - 1) * perPage + index + 1}
                           </div>
-                          <div
-                            onClick={() =>
-                              handleOpenConfirmRemove(
-                                item.id,
-                                `Banner #${(currentPage - 1) * perPage + index + 1}`
-                              )
-                            }
-                            className="cursor-pointer w-[36px] hover:scale-105 hover:bg-red-200 hover:border-red-500 h-[28px] flex justify-center items-center border-2 border-[#C8C8C8] rounded-[6px]"
-                          >
-                            <Image
-                              src="/epack/icon_remove.svg"
-                              alt=""
-                              width={14}
-                              height={18}
-                              style={{ objectFit: "cover" }}
-                            />
+                          <div className="flex gap-[8px]">
+                            <div
+                              onClick={() => handleOpenEdit(item.id)}
+                              className="cursor-pointer w-[50px] h-[28px] flex justify-center items-center bg-[#212222] text-white text-[11px] rounded-[6px] hover:scale-105 transition-all duration-200"
+                            >
+                              Sửa
+                            </div>
+                            <div
+                              onClick={() =>
+                                handleOpenConfirmRemove(
+                                  item.id,
+                                  `Banner #${(currentPage - 1) * perPage + index + 1}`
+                                )
+                              }
+                              className="cursor-pointer w-[36px] hover:scale-105 hover:bg-red-200 hover:border-red-500 h-[28px] flex justify-center items-center border-2 border-[#C8C8C8] rounded-[6px]"
+                            >
+                              <Image
+                                src="/epack/icon_remove.svg"
+                                alt=""
+                                width={14}
+                                height={18}
+                                style={{ objectFit: "cover" }}
+                              />
+                            </div>
                           </div>
                         </div>
+                        {item.link && (
+                          <div className="text-[11px] text-[#1572FF] truncate">{item.link}</div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -341,6 +353,15 @@ const BannerList = () => {
               className="hidden"
               onChange={handleFileChange}
             />
+            <div>
+              <label className="text-[13px] font-[400] text-[#212222]">Link</label>
+              <Input
+                value={uploadLink}
+                onChange={(e) => setUploadLink(e.target.value)}
+                placeholder="Nhập link (tuỳ chọn)"
+                className="h-[36px] w-full text-[13px] mt-[6px]"
+              />
+            </div>
             <div className="flex justify-end gap-[10px]">
               <div
                 onClick={handleCloseUploadModal}

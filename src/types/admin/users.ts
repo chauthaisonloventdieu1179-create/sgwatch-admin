@@ -57,6 +57,7 @@ export interface IBanner {
   id: number;
   media_url: string;
   media_type: string;
+  link: string | null;
   sort_order: number | null;
   is_active: boolean | null;
   created_at: string;

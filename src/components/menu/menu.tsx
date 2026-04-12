@@ -22,6 +22,9 @@ import {
   MonitorSmartphone,
   Tablet,
   Flame,
+  BookOpen,
+  LayoutList,
+  ArrowLeftRight,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -39,6 +42,12 @@ const navigation: NavigationItem[] = [
     name: "Dashboard",
     href: "/admin/dashboard/",
     icon: LayoutDashboard,
+  },
+  {
+    key: "inventory",
+    name: "Xuất nhập hàng",
+    href: "/admin/inventory/",
+    icon: ArrowLeftRight,
   },
   {
     key: "chat",
@@ -99,6 +108,18 @@ const navigation: NavigationItem[] = [
     name: "Danh sách banner",
     href: "/admin/banner/",
     icon: ImageIcon,
+  },
+  {
+    key: "blog",
+    name: "Quản lý Blog",
+    href: "/admin/blog/",
+    icon: BookOpen,
+  },
+  {
+    key: "collection",
+    name: "Bộ sưu tập",
+    href: "/admin/collection/",
+    icon: LayoutList,
   },
   {
     key: "discount",

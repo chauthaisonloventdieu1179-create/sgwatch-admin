@@ -68,6 +68,9 @@ const Dashboard = () => {
   const [toDate, setToDate] = useState<Dayjs | null>(
     searchParams.get("date_to") ? dayjs(searchParams.get("date_to")) : null,
   );
+  const [orderStatuses, setOrderStatuses] = useState<string[]>(
+    searchParams.getAll("order_status[]"),
+  );
 
   const [loading, setLoading] = useState(false);
   const [totalOrders, setTotalOrders] = useState(0);
@@ -98,8 +101,9 @@ const Dashboard = () => {
       if (fromDate) params.set("date_from", fromDate.format("YYYY-MM-DD"));
       if (toDate) params.set("date_to", toDate.format("YYYY-MM-DD"));
     }
+    orderStatuses.forEach((s) => params.append("order_status[]", s));
     return params;
-  }, [filterType, selectedMonth, selectedYear, fromDate, toDate]);
+  }, [filterType, selectedMonth, selectedYear, fromDate, toDate, orderStatuses]);
 
   // Build API query params
   const buildApiParams = useCallback(() => {
@@ -112,8 +116,11 @@ const Dashboard = () => {
       if (fromDate) q.date_from = fromDate.format("YYYY-MM-DD");
       if (toDate) q.date_to = toDate.format("YYYY-MM-DD");
     }
+    if (orderStatuses.length > 0) {
+      q["order_status[]"] = orderStatuses;
+    }
     return q;
-  }, [filterType, selectedMonth, selectedYear, fromDate, toDate]);
+  }, [filterType, selectedMonth, selectedYear, fromDate, toDate, orderStatuses]);
 
   const fetchDashboard = useCallback(
     async (showLoading = true) => {
@@ -208,6 +215,7 @@ const Dashboard = () => {
     setSelectedYear(dayjs());
     setFromDate(null);
     setToDate(null);
+    setOrderStatuses([]);
     router.push("/admin/dashboard");
     // Gọi API với params mặc định (month = tháng hiện tại)
     try {
@@ -449,6 +457,19 @@ const Dashboard = () => {
               />
             </>
           )}
+          <Select
+            mode="multiple"
+            allowClear
+            placeholder="Trạng thái đơn hàng"
+            className="min-w-[200px] h-[32px]"
+            value={orderStatuses}
+            onChange={(vals) => setOrderStatuses(vals)}
+            maxTagCount={2}
+            options={Object.entries(STATUS_MAP).map(([key, s]) => ({
+              value: key,
+              label: s.label,
+            }))}
+          />
           <div
             onClick={handleReset}
             className="text-[12px] font-medium text-[#212222] border border-[#C8C8C8] px-[16px] h-[32px] rounded-[10px] cursor-pointer flex justify-center items-center hover:scale-105 transition-all duration-200 ease-out active:scale-95"
