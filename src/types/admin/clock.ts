@@ -33,6 +33,7 @@ export interface IClockProduct {
     ports?: string;
     target_customer?: string;
     design?: string;
+    color_code?: string;
   } | null;
   stock_quantity: number;
   stock_type: string | null;
@@ -43,6 +44,7 @@ export interface IClockProduct {
   is_featured: boolean | null;
   sort_order: number | null;
   display_order: number | null;
+  primary_image_url: string | null;
   brand: {
     id: number;
     name: string;

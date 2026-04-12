@@ -118,7 +118,7 @@ const FeaturedProducts = () => {
       setSearching(true);
       const token = getToken();
       const res = await sendRequest<IProductsResponse>({
-        url: `/admin/shop/products?keyword=${encodeURIComponent(keyword.trim())}&page=1&per_page=15`,
+        url: `/admin/shop/products?keyword=${encodeURIComponent(keyword.trim())}&page=1&per_page=15&category_id=1`,
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -392,12 +392,12 @@ const FeaturedProducts = () => {
                         >
                           #
                         </th>
-                        <th
+                        {/* <th
                           style={{ padding: "12px 16px" }}
                           className="w-[8%] text-center"
                         >
                           Ảnh
-                        </th>
+                        </th> */}
                         <th
                           style={{ padding: "12px 16px" }}
                           className="w-[30%] text-left"
@@ -476,7 +476,7 @@ const FeaturedProducts = () => {
                                 </span>
                               </div>
                             </td>
-                            <td
+                            {/* <td
                               style={{ padding: "8px 16px" }}
                               className="text-center"
                             >
@@ -498,7 +498,7 @@ const FeaturedProducts = () => {
                                   </span>
                                 )}
                               </div>
-                            </td>
+                            </td> */}
                             <td style={{ padding: "8px 16px" }}>
                               <div className="text-[13px] font-medium text-[#212222] line-clamp-2">
                                 {product.name}

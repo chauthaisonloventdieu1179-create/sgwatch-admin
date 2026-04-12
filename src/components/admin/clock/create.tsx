@@ -72,6 +72,10 @@ const Create = ({
   const [productInfo, setProductInfo] = useState<string>("");
   const [dealInfo, setDealInfo] = useState<string>("");
   const [thongSoKyThuat, setThongSoKyThuat] = useState<string>("");
+  const [attrColorCode, setAttrColorCode] = useState<string>("");
+  const [attrColor, setAttrColor] = useState<string>("");
+  const [primaryImage, setPrimaryImage] = useState<File | null>(null);
+  const [existingPrimaryImage, setExistingPrimaryImage] = useState<string>("");
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<
     { id: number; image_url: string }[]
@@ -225,6 +229,9 @@ const Create = ({
           setProductInfo(p.product_info || "");
           setDealInfo(p.deal_info || "");
           setThongSoKyThuat(p.attributes?.thong_so_ky_thuat || "");
+          setAttrColorCode(p.attributes?.color_code || "");
+          setAttrColor(p.attributes?.color || "");
+          setExistingPrimaryImage(p.primary_image_url || "");
           setExistingImages(
             p.images?.map((img) => ({
               id: img.id,
@@ -239,6 +246,20 @@ const Create = ({
       fetchProduct();
     }
   }, [id]);
+
+  const handlePrimaryImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const compressed = await compressImage(file);
+      setPrimaryImage(compressed);
+      setExistingPrimaryImage("");
+    }
+  };
+
+  const removePrimaryImage = () => {
+    setPrimaryImage(null);
+    setExistingPrimaryImage("");
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -288,6 +309,9 @@ const Create = ({
     if (productInfo) formData.append("product_info", productInfo);
     if (dealInfo) formData.append("deal_info", dealInfo);
     if (thongSoKyThuat) formData.append("attributes[thong_so_ky_thuat]", thongSoKyThuat);
+    if (brandId === "5" && attrColorCode) formData.append("attributes[color_code]", attrColorCode);
+    if (brandId === "5" && attrColor) formData.append("attributes[color]", attrColor);
+    if (primaryImage) formData.append("primary_image", primaryImage);
     if (id && existingImages.length > 0) {
       existingImages.forEach((img) => {
         formData.append("existing_image_ids[]", String(img.id));
@@ -610,6 +634,52 @@ const Create = ({
                       rows={5}
                       className="w-full text-[14px] mt-[8px] font-[400] text-[#212222] placeholder:text-[#9E9E9E]"
                     />
+                  </div>
+                  {brandId === "5" && (
+                    <div className="w-full flex gap-[20px]">
+                      <div className="w-[50%]">
+                        <label className="text-[14px] font-[400] text-[#000000]">Mã màu</label>
+                        <Input value={attrColorCode} onChange={(e) => setAttrColorCode(e.target.value)} placeholder="Nhập mã màu" className="h-[32px] w-full text-[14px] mt-[8px] font-[400] text-[#212222] placeholder:text-[#9E9E9E]" />
+                      </div>
+                      <div className="w-[50%]">
+                        <label className="text-[14px] font-[400] text-[#000000]">Màu</label>
+                        <Input value={attrColor} onChange={(e) => setAttrColor(e.target.value)} placeholder="Nhập màu" className="h-[32px] w-full text-[14px] mt-[8px] font-[400] text-[#212222] placeholder:text-[#9E9E9E]" />
+                      </div>
+                    </div>
+                  )}
+                  <div className="w-full">
+                    <label className="text-[14px] font-[400] text-[#000000]">
+                      Ảnh đại diện
+                    </label>
+                    <div className="flex gap-[10px] mt-[8px] items-start">
+                      {existingPrimaryImage && !primaryImage && (
+                        <div className="relative w-[100px] h-[100px] rounded-[8px] overflow-hidden border-2 border-[#1572FF]">
+                          <Image
+                            src={existingPrimaryImage.startsWith("http") ? existingPrimaryImage : `${process.env.NEXT_PUBLIC_API_URL?.replace("/admin-api/v1", "")}/storage/${existingPrimaryImage}`}
+                            width={100} height={100} className="object-cover w-full h-full" alt="primary" unoptimized={true}
+                          />
+                          <button onClick={removePrimaryImage} className="absolute top-1 right-1 bg-red-500 text-white w-[20px] h-[20px] rounded-full text-[10px] flex items-center justify-center" type="button">X</button>
+                        </div>
+                      )}
+                      {primaryImage && (
+                        <div className="relative w-[100px] h-[100px] rounded-[8px] overflow-hidden border-2 border-[#1572FF]">
+                          <Image src={URL.createObjectURL(primaryImage)} width={100} height={100} className="object-cover w-full h-full" alt="primary-new" unoptimized={true} />
+                          <button onClick={removePrimaryImage} className="absolute top-1 right-1 bg-red-500 text-white w-[20px] h-[20px] rounded-full text-[10px] flex items-center justify-center" type="button">X</button>
+                        </div>
+                      )}
+                      {!existingPrimaryImage && !primaryImage && (
+                        <div className="w-[100px] h-[100px] rounded-[8px] border-2 border-dashed border-[#C8C8C8] flex justify-center items-center text-[11px] text-[#9E9E9E]">
+                          Chưa có ảnh
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-[10px]">
+                      <label htmlFor="clock-primary-image" className="w-[160px] h-[32px] bg-[#212222] cursor-pointer rounded-[10px] text-white font-medium text-[12px] flex justify-center items-center gap-[5px] hover:scale-105 transition-all duration-200">
+                        <Image src="/epack/icon_plus.svg" alt="" width={10} height={6} style={{ objectFit: "cover" }} />
+                        Chọn ảnh đại diện
+                      </label>
+                      <input id="clock-primary-image" type="file" accept="image/*" onClick={(e) => { (e.target as HTMLInputElement).value = ""; }} onChange={handlePrimaryImageChange} style={{ display: "none" }} />
+                    </div>
                   </div>
                   <div className="w-full">
                     <label className="text-[14px] font-[400] text-[#000000]">

@@ -63,6 +63,8 @@ const Create = ({
   const [attrTargetCustomer, setAttrTargetCustomer] = useState<string>("");
   const [attrBattery, setAttrBattery] = useState<string>("");
   const [attrDesign, setAttrDesign] = useState<string>("");
+  const [primaryImage, setPrimaryImage] = useState<File | null>(null);
+  const [existingPrimaryImage, setExistingPrimaryImage] = useState<string>("");
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<
     { id: number; image_url: string }[]
@@ -199,6 +201,7 @@ const Create = ({
           } else {
             setAttrBattery(rawBattery);
           }
+          setExistingPrimaryImage(p.primary_image_url || "");
           setExistingImages(
             p.images?.map((img) => ({ id: img.id, image_url: img.image_url })) || [],
           );
@@ -210,6 +213,20 @@ const Create = ({
       fetchProduct();
     }
   }, [id]);
+
+  const handlePrimaryImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const compressed = await compressImage(file);
+      setPrimaryImage(compressed);
+      setExistingPrimaryImage("");
+    }
+  };
+
+  const removePrimaryImage = () => {
+    setPrimaryImage(null);
+    setExistingPrimaryImage("");
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -272,6 +289,7 @@ const Create = ({
         formData.append("attributes[battery]", attrBattery);
       }
     }
+    if (primaryImage) formData.append("primary_image", primaryImage);
     if (id && existingImages.length > 0) {
       existingImages.forEach((img) => {
         formData.append("existing_image_ids[]", String(img.id));
@@ -461,6 +479,34 @@ const Create = ({
                   <div className="w-full">
                     <label className="text-[14px] font-[400] text-[#000000]">Đối tượng khách hàng</label>
                     <TextArea value={attrTargetCustomer} onChange={(e) => setAttrTargetCustomer(e.target.value)} placeholder="Nhập đối tượng khách hàng" rows={3} className="w-full text-[14px] mt-[8px] font-[400] text-[#212222] placeholder:text-[#9E9E9E]" />
+                  </div>
+                  <div className="w-full">
+                    <label className="text-[14px] font-[400] text-[#000000]">Ảnh đại diện</label>
+                    {existingPrimaryImage && !primaryImage && (
+                      <div className="flex gap-[10px] mt-[8px] flex-wrap">
+                        <div className="relative w-[100px] h-[100px] rounded-[8px] overflow-hidden border-2 border-[#1572FF]">
+                          <Image src={existingPrimaryImage.startsWith("http") ? existingPrimaryImage : `${process.env.NEXT_PUBLIC_API_URL?.replace("/admin-api/v1", "")}/storage/${existingPrimaryImage}`} width={100} height={100} className="object-cover w-full h-full" alt="primary" unoptimized={true} />
+                          <button onClick={removePrimaryImage} className="absolute top-1 right-1 bg-red-500 text-white w-[20px] h-[20px] rounded-full text-[10px] flex items-center justify-center" type="button">X</button>
+                        </div>
+                      </div>
+                    )}
+                    {primaryImage && (
+                      <div className="flex gap-[10px] mt-[8px] flex-wrap">
+                        <div className="relative w-[100px] h-[100px] rounded-[8px] overflow-hidden border-2 border-[#1572FF]">
+                          <Image src={URL.createObjectURL(primaryImage)} width={100} height={100} className="object-cover w-full h-full" alt="primary-new" unoptimized={true} />
+                          <button onClick={removePrimaryImage} className="absolute top-1 right-1 bg-red-500 text-white w-[20px] h-[20px] rounded-full text-[10px] flex items-center justify-center" type="button">X</button>
+                        </div>
+                      </div>
+                    )}
+                    {!primaryImage && !existingPrimaryImage && (
+                      <div className="mt-[10px]">
+                        <label htmlFor="laptop-primary-image" className="w-[130px] h-[32px] bg-[#1572FF] cursor-pointer rounded-[10px] text-white font-medium text-[12px] flex justify-center items-center gap-[5px] hover:scale-105 transition-all duration-200">
+                          <Image src="/epack/icon_plus.svg" alt="" width={10} height={6} style={{ objectFit: "cover" }} />
+                          Chọn ảnh đại diện
+                        </label>
+                        <input id="laptop-primary-image" type="file" accept="image/*" onClick={(e) => { (e.target as HTMLInputElement).value = ""; }} onChange={handlePrimaryImageChange} style={{ display: "none" }} />
+                      </div>
+                    )}
                   </div>
                   <div className="w-full">
                     <label className="text-[14px] font-[400] text-[#000000]">Hình ảnh</label>

@@ -84,6 +84,20 @@ const ClockList = ({
 
   const [sortByOrder, setSortByOrder] = useState(() => searchParams.get("sort_by_order") === "1");
 
+  // Sync state từ URL search params khi quay lại (router.back)
+  useEffect(() => {
+    setCurrentPage(Number(searchParams.get("page")) || 1);
+    setKeyword(searchParams.get("keyword") || "");
+    setBrandId(searchParams.get("brand_id") || undefined);
+    setMovementType(searchParams.get("movement_type") || undefined);
+    setStockType(searchParams.get("stock_type") || undefined);
+    setGender(searchParams.get("gender") || undefined);
+    setSortBy(searchParams.get("sort_by") || undefined);
+    setIsDomestic(searchParams.get("is_domestic") || undefined);
+    setIsNew(searchParams.get("is_new") || undefined);
+    setSortByOrder(searchParams.get("sort_by_order") === "1");
+  }, [searchParams]);
+
   // Ghi search params vào URL
   const pushSearchParams = useCallback((params: Record<string, string | undefined>, page: number) => {
     const sp = new URLSearchParams();
@@ -651,11 +665,7 @@ const ClockList = ({
                   >
                     {Array.isArray(products) &&
                       products.map((item, index) => {
-                        const primaryImg =
-                          item.images?.find((img) => img.is_primary)
-                            ?.image_url ||
-                          item.images?.[0]?.image_url ||
-                          null;
+                        const primaryImg = item.primary_image_url || null;
                         return (
                           <tr
                             key={item.id}
