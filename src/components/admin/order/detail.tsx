@@ -232,6 +232,14 @@ const OrderDetail = () => {
             <div className="pb-[8px] w-full border-b-[2px] border-[#C8C8C8] text-[#212222] text-[14px] font-medium flex justify-between items-center">
               <span>Thông tin đơn hàng</span>
               <div className="flex gap-[8px]">
+                {order.user && (
+                  <div
+                    onClick={() => router.push(`/admin/chat/?user_id=${order.user!.id}`)}
+                    className="text-white text-[12px] font-medium px-[14px] h-[30px] rounded-[8px] cursor-pointer flex justify-center items-center hover:scale-105 transition-all bg-[#059669]"
+                  >
+                    Nhắn tin với {order.user.full_name}
+                  </div>
+                )}
                 <div
                   onClick={handleOpenStatusModal}
                   className="text-white text-[12px] font-medium px-[14px] h-[30px] rounded-[8px] cursor-pointer flex justify-center items-center hover:scale-105 transition-all bg-[#7C3AED]"

@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { getToken } from "@/api/ServerActions";
 import { sendRequest } from "@/utils/api";
 import { useSelector } from "react-redux";
@@ -32,6 +33,9 @@ interface PendingFile {
 const ChatPage = () => {
   const profile = useSelector((state: RootState) => state.profile.profile);
   const currentUserId = profile?.id ? Number(profile.id) : null;
+  const searchParams = useSearchParams();
+  const targetUserId = searchParams.get("user_id") ? Number(searchParams.get("user_id")) : null;
+  const autoSelectedRef = useRef(false);
 
   const [conversations, setConversations] = useState<IConversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<IConversation | null>(null);
@@ -136,6 +140,16 @@ const ChatPage = () => {
       setLoadingMsg(false);
     }
   }, []);
+
+  // Auto-select conversation from order detail (user_id query param)
+  useEffect(() => {
+    if (!targetUserId || autoSelectedRef.current || conversations.length === 0) return;
+    const conv = conversations.find((c) => c.id === targetUserId);
+    if (conv) {
+      autoSelectedRef.current = true;
+      handleSelectConv(conv);
+    }
+  }, [conversations, targetUserId]);
 
   // Keep selectedConvRef in sync
   useEffect(() => {
