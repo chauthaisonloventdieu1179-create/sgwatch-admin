@@ -260,6 +260,10 @@ const OrderDetail = () => {
                 <span className="font-semibold">{order.order_number}</span>
               </div>
               <div className="flex gap-[8px]">
+                <span className="text-[#9E9E9E] w-[140px]">Loại đơn:</span>
+                <span>{order.order_type === "online" ? "Online" : order.order_type === "walk_in" ? "Tại cửa hàng" : order.order_type}</span>
+              </div>
+              <div className="flex gap-[8px]">
                 <span className="text-[#9E9E9E] w-[140px]">Trạng thái:</span>
                 {getStatusBadge(order.status, STATUS_MAP)}
               </div>
@@ -470,6 +474,12 @@ const OrderDetail = () => {
                   <div className="flex justify-between">
                     <span className="text-[#9E9E9E]">Phí COD:</span>
                     <span>{formatCurrency(order.cod_fee, order.currency)}</span>
+                  </div>
+                )}
+                {Number(order.stripe_fee) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-[#9E9E9E]">Phí Stripe:</span>
+                    <span>{formatCurrency(String(order.stripe_fee), order.currency)}</span>
                   </div>
                 )}
                 {Number(order.discount_amount) > 0 && (

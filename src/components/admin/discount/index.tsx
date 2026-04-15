@@ -24,7 +24,7 @@ const DiscountList = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createCode, setCreateCode] = useState("");
   const [createQuantity, setCreateQuantity] = useState<number>(10);
-  const [createPercentage, setCreatePercentage] = useState<number>(10);
+  const [createAmount, setCreateAmount] = useState<number>(10);
   const [createExpiresAt, setCreateExpiresAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
@@ -33,7 +33,7 @@ const DiscountList = () => {
   const [editId, setEditId] = useState<number | null>(null);
   const [editCode, setEditCode] = useState("");
   const [editQuantity, setEditQuantity] = useState<number>(0);
-  const [editPercentage, setEditPercentage] = useState<number>(0);
+  const [editAmount, setEditAmount] = useState<number>(0);
   const [editExpiresAt, setEditExpiresAt] = useState<string>("");
 
   useEffect(() => {
@@ -68,7 +68,7 @@ const DiscountList = () => {
   const handleOpenCreate = () => {
     setCreateCode("");
     setCreateQuantity(10);
-    setCreatePercentage(10);
+    setCreateAmount(10);
     setCreateExpiresAt("");
     setShowCreateModal(true);
   };
@@ -90,7 +90,7 @@ const DiscountList = () => {
         body: {
           code: createCode,
           quantity: createQuantity,
-          percentage: createPercentage,
+          amount: createAmount,
           ...(createExpiresAt ? { expires_at: createExpiresAt } : {}),
         },
       });
@@ -109,7 +109,7 @@ const DiscountList = () => {
     setEditId(item.id);
     setEditCode(item.code);
     setEditQuantity(item.quantity);
-    setEditPercentage(item.percentage);
+    setEditAmount(item.amount);
     setEditExpiresAt(item.expires_at || "");
     setShowEditModal(true);
   };
@@ -128,7 +128,7 @@ const DiscountList = () => {
         body: {
           code: editCode,
           quantity: editQuantity,
-          percentage: editPercentage,
+          amount: editAmount,
           ...(editExpiresAt ? { expires_at: editExpiresAt } : {}),
         },
       });
@@ -243,7 +243,7 @@ const DiscountList = () => {
                         Số lượng
                       </th>
                       <th style={{ padding: "12px 16px" }} className="w-[12%] text-center text-[14px]">
-                        Phần trăm (%)
+                        Số tiền
                       </th>
                       <th style={{ padding: "12px 16px" }} className="w-[10%] text-center text-[14px]">
                         Trạng thái
@@ -291,7 +291,7 @@ const DiscountList = () => {
                             {item.quantity}
                           </td>
                           <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                            {item.percentage}%
+                            {item.amount}
                           </td>
                           <td style={{ padding: "10px 16px", textAlign: "center" }}>
                             {item.expires_at && new Date(item.expires_at) < new Date() ? (
@@ -397,13 +397,12 @@ const DiscountList = () => {
               </div>
               <div className="flex flex-col gap-[6px]">
                 <label className="text-[13px] font-medium text-[#212222]">
-                  Phần trăm giảm (%)
+                  Số tiền
                 </label>
                 <InputNumber
                   min={1}
-                  max={100}
-                  value={createPercentage}
-                  onChange={(v) => setCreatePercentage(v || 1)}
+                  value={createAmount}
+                  onChange={(v) => setCreateAmount(v || 1)}
                   className="h-[36px] w-full"
                 />
               </div>
@@ -475,13 +474,12 @@ const DiscountList = () => {
               </div>
               <div className="flex flex-col gap-[6px]">
                 <label className="text-[13px] font-medium text-[#212222]">
-                  Phần trăm giảm (%)
+                  Số tiền
                 </label>
                 <InputNumber
                   min={1}
-                  max={100}
-                  value={editPercentage}
-                  onChange={(v) => setEditPercentage(v || 1)}
+                  value={editAmount}
+                  onChange={(v) => setEditAmount(v || 1)}
                   className="h-[36px] w-full"
                 />
               </div>

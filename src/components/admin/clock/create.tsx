@@ -11,18 +11,14 @@ import { ICategoriesResponse } from "@/types/admin/category";
 import Image from "next/image";
 
 const MOVEMENT_TYPES = [
-  { value: "quartz", label: "Quartz" },
+  { value: "quartz", label: "Quartz (Pin)" },
   { value: "automatic", label: "Automatic" },
-  { value: "manual", label: "Manual" },
-  { value: "solar", label: "Solar" },
-  { value: "kinetic", label: "Kinetic" },
 ];
 
 const GENDERS = [
   { value: "male", label: "Nam" },
   { value: "female", label: "Nữ" },
   { value: "couple", label: "Đồng hồ cặp" },
-  { value: "unisex", label: "Unisex" },
 ];
 
 const STOCK_TYPES = [

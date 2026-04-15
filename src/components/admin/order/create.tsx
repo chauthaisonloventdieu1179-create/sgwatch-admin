@@ -98,7 +98,7 @@ const OrderCreate = () => {
 
   // Discount code
   const [discountCode, setDiscountCode] = useState("");
-  const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [discountApplied, setDiscountApplied] = useState(false);
   const [discountLoading, setDiscountLoading] = useState(false);
 
@@ -253,16 +253,16 @@ const OrderCreate = () => {
       });
       const dc = res.data.discount_code;
       if (dc && dc.available) {
-        setDiscountPercent(dc.percentage);
+        setDiscountAmount(Number(dc.amount));
         setDiscountApplied(true);
-        message.success(`Áp dụng mã giảm giá thành công: -${dc.percentage}%`);
+        message.success(`Áp dụng mã giảm giá thành công: -¥${Number(dc.amount).toLocaleString("ja-JP")}`);
       } else {
-        setDiscountPercent(0);
+        setDiscountAmount(0);
         setDiscountApplied(false);
         message.error("Mã giảm giá không còn hiệu lực");
       }
     } catch {
-      setDiscountPercent(0);
+      setDiscountAmount(0);
       setDiscountApplied(false);
       message.error("Mã giảm giá không tồn tại hoặc đã hết hạn");
     } finally {
@@ -272,7 +272,7 @@ const OrderCreate = () => {
 
   const handleRemoveDiscount = () => {
     setDiscountCode("");
-    setDiscountPercent(0);
+    setDiscountAmount(0);
     setDiscountApplied(false);
   };
 
@@ -381,7 +381,7 @@ const OrderCreate = () => {
       // Discount
       if (order.discount_code) {
         setDiscountCode(order.discount_code);
-        setDiscountPercent(order.discount_percentage || 0);
+        setDiscountAmount(Number(order.discount_amount || 0));
         setDiscountApplied(true);
       }
     } catch {
@@ -476,10 +476,8 @@ const OrderCreate = () => {
   };
 
   const subtotal = items.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
-  const discountAmount = discountApplied
-    ? Math.round((subtotal * discountPercent) / 100)
-    : 0;
-  const totalAmount = subtotal - discountAmount + shippingFee;
+  const discountValue = discountApplied ? discountAmount : 0;
+  const totalAmount = subtotal - discountValue + shippingFee;
 
   return (
     <>
@@ -766,7 +764,7 @@ const OrderCreate = () => {
                       setDiscountCode(e.target.value);
                       if (discountApplied) {
                         setDiscountApplied(false);
-                        setDiscountPercent(0);
+                        setDiscountAmount(0);
                       }
                     }}
                     className="h-[36px] text-[14px] w-[280px]"
@@ -784,7 +782,7 @@ const OrderCreate = () => {
                   ) : (
                     <div className="flex items-center gap-[8px]">
                       <span className="text-[13px] text-green-600 font-medium">
-                        Giảm {discountPercent}%
+                        Giảm ¥{discountAmount.toLocaleString("ja-JP")}
                       </span>
                       <div
                         onClick={handleRemoveDiscount}
@@ -807,8 +805,8 @@ const OrderCreate = () => {
                     </div>
                     {discountApplied && (
                       <div className="flex justify-between text-green-600">
-                        <span>Giảm giá ({discountPercent}%):</span>
-                        <span>-¥{discountAmount.toLocaleString("ja-JP")}</span>
+                        <span>Giảm giá:</span>
+                        <span>-¥{discountValue.toLocaleString("ja-JP")}</span>
                       </div>
                     )}
                     <div className="flex justify-between">

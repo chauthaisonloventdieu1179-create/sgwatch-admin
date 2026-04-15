@@ -38,6 +38,8 @@ export interface IOrderItem {
 export interface IOrderDetail {
   id: number;
   order_number: string;
+  order_type: string;
+  customer_name: string | null;
   status: string;
   payment_status: string;
   payment_method: string;
@@ -46,9 +48,11 @@ export interface IOrderDetail {
   subtotal: string;
   shipping_fee: string;
   cod_fee: string;
+  stripe_fee: number;
   deposit_amount: string;
   discount_amount: string;
   points_used: number;
+  points_earned: number;
   total_amount: string;
   currency: string;
   shipping_name: string;

@@ -77,7 +77,7 @@ export interface IDiscountCode {
   id: number;
   code: string;
   quantity: number;
-  percentage: number;
+  amount: number;
   is_active: boolean | null;
   expires_at: string | null;
   created_at: string;

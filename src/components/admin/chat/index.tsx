@@ -887,12 +887,14 @@ const ChatPage = () => {
                     }}
                     onChange={handleFileSelect}
                   />
-                  <Input
+                  <Input.TextArea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Aa"
-                    className="flex-1 h-[36px] rounded-[20px] bg-[#F5F5F5] text-[14px] border-none"
+                    autoSize={{ minRows: 1, maxRows: 4 }}
+                    className="flex-1 rounded-[20px] bg-[#F5F5F5] text-[14px] border-none resize-none"
+                    style={{ padding: "8px 16px" }}
                     disabled={sending}
                   />
                   <div
