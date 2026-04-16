@@ -153,6 +153,35 @@ const OrderDetail = () => {
   };
 
   const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDeleteOrder = async () => {
+    if (!order) return;
+    Modal.confirm({
+      title: "Xóa đơn hàng",
+      content: `Bạn có chắc muốn xóa đơn hàng #${order.order_number}? Hành động này không thể hoàn tác.`,
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          setDeleteLoading(true);
+          const token = getToken();
+          await sendRequest({
+            url: `/admin/shop/orders/${order.id}`,
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          message.success("Xóa đơn hàng thành công");
+          router.push("/admin/order");
+        } catch (error: any) {
+          message.error(error?.message || "Xóa đơn hàng thất bại");
+        } finally {
+          setDeleteLoading(false);
+        }
+      },
+    });
+  };
 
   const handleInvoice = async () => {
     if (!order) return;
@@ -217,6 +246,12 @@ const OrderDetail = () => {
                 {invoiceLoading ? "Đang tải..." : "In hóa đơn"}
               </div>
             )}
+            <div
+              onClick={handleDeleteOrder}
+              className={`text-white text-[12px] font-medium bg-[#DC2626] px-[16px] h-[32px] rounded-[10px] cursor-pointer flex justify-center items-center hover:scale-105 transition-all duration-200 ease-out active:scale-95 hover:shadow-[0_8px_24px_rgba(0,0,0,.25)] ${deleteLoading ? "opacity-50 pointer-events-none" : ""}`}
+            >
+              {deleteLoading ? "Đang xóa..." : "Xóa đơn hàng"}
+            </div>
             <div
               onClick={() => router.push("/admin/order")}
               className="text-white text-[12px] font-medium bg-[#212222] w-[120px] h-[32px] rounded-[10px] cursor-pointer flex justify-center items-center hover:scale-105 transition-all duration-200 ease-out active:scale-95 hover:shadow-[0_8px_24px_rgba(0,0,0,.25)]"

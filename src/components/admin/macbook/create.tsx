@@ -21,8 +21,9 @@ const DOMESTIC_OPTIONS = [
 
 const CONDITIONS = [
   { value: "new", label: "Mới" },
-  { value: "like_new", label: "Like New" },
-  { value: "used", label: "Đã sử dụng" },
+  { value: "like_new", label: "Like new" },
+  { value: "display", label: "Trưng bày" },
+  { value: "used", label: "Đã qua sử dụng" },
 ];
 
 interface CreateProps {

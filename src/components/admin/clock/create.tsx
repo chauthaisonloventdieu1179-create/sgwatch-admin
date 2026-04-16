@@ -12,7 +12,9 @@ import Image from "next/image";
 
 const MOVEMENT_TYPES = [
   { value: "quartz", label: "Quartz (Pin)" },
-  { value: "automatic", label: "Automatic" },
+  { value: "automatic", label: "Automatic (Cơ)" },
+  { value: "solar", label: "Solar (Năng lượng mặt trời)" },
+  { value: "eco-drive", label: "Eco-drive" },
 ];
 
 const GENDERS = [
