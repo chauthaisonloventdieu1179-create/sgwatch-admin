@@ -7,6 +7,7 @@ import {
   Download,
   FileText,
   X,
+  Reply,
 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
@@ -19,10 +20,56 @@ import {
   IConversationsResponse,
   IChatMessage,
   IChatHistoryResponse,
+  IReplyToMessage,
 } from "@/types/admin/chat";
 import Pusher from "pusher-js";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+const isHeicFile = (file: File) =>
+  file.type === "image/heic" ||
+  file.type === "image/heif" ||
+  /\.(heic|heif)$/i.test(file.name);
+
+const isHeicUrl = (url: string) => /\.(heic|heif)(\?.*)?$/i.test(url);
+
+const isHeicMsg = (msg: { file_name?: string | null; file_type?: string | null; file_url?: string | null }) =>
+  (msg.file_name && /\.(heic|heif)$/i.test(msg.file_name)) ||
+  (msg.file_type && (msg.file_type === "image/heic" || msg.file_type === "image/heif")) ||
+  (msg.file_url && isHeicUrl(msg.file_url));
+
+// Convert HEIC → blob URL (dùng cho preview thumbnail)
+const convertHeicToPreviewUrl = async (file: File): Promise<string | null> => {
+  try {
+    const heic2any = (await import("heic2any")).default;
+    const result = await heic2any({ blob: file, toType: "image/webp", quality: 0.85 });
+    const output = Array.isArray(result) ? result[0] : result;
+    return URL.createObjectURL(output);
+  } catch {
+    return null;
+  }
+};
+
+// Convert HEIC → File WebP (dùng để upload lên server)
+
+// Component hiển thị ảnh HEIC từ server
+// Safari/iOS hiển thị được HEIC trực tiếp
+// Chrome/Firefox: fallback download button
+const HeicImage = ({ src, alt, className, onClick, fileName }: { src: string; alt: string; className?: string; onClick?: () => void; fileName?: string }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-[6px] px-[16px] py-[12px] bg-[#F0F0F0] rounded-[12px] cursor-pointer min-w-[140px]"
+        onClick={onClick}
+      >
+        <span className="text-[11px] font-medium text-[#9E9E9E]">HEIC · {fileName || alt}</span>
+        <span className="text-[11px] text-[#1572FF] font-medium">Nhấn để tải về</span>
+      </div>
+    );
+  }
+  return <img src={src} alt={alt} className={className} onClick={onClick} onError={() => setFailed(true)} />;
+};
 
 interface PendingFile {
   file: File;
@@ -47,6 +94,7 @@ const ChatPage = () => {
   const [loadingMsg, setLoadingMsg] = useState(false);
   const [sending, setSending] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [replyingTo, setReplyingTo] = useState<IChatMessage | null>(null);
 
   // Pagination state
   const [convPage, setConvPage] = useState(1);
@@ -59,6 +107,7 @@ const ChatPage = () => {
   const pusherRef = useRef<Pusher | null>(null);
   const selectedConvRef = useRef<IConversation | null>(null);
   const prevMsgCountRef = useRef<number>(0);
+  const optimisticIdsRef = useRef<Set<number>>(new Set());
 
   // Build conversation URL thủ công để tránh encode dấu +
   const buildConvUrl = (page: number, search?: string) => {
@@ -200,8 +249,21 @@ const ChatPage = () => {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const msgs = res.data.messages || [];
-      setMessages(msgs.slice().reverse());
+      const serverMsgs = (res.data.messages || []).slice().reverse();
+      const optimisticIds = optimisticIdsRef.current;
+
+      setMessages((prev) => {
+        const serverMap = new Map(serverMsgs.map((m) => [m.id, m]));
+        // Giữ các message đã confirmed, update data mới từ server
+        const confirmed = prev
+          .filter((m) => !optimisticIds.has(m.id))
+          .map((m) => serverMap.get(m.id) ?? m);
+        // Thêm message mới từ server chưa có trong state
+        const confirmedIds = new Set(confirmed.map((m) => m.id));
+        const newMsgs = serverMsgs.filter((m) => !confirmedIds.has(m.id));
+        optimisticIds.clear();
+        return [...confirmed, ...newMsgs];
+      });
     } catch {}
   };
 
@@ -260,6 +322,7 @@ const ChatPage = () => {
     setSelectedConv(conv);
     setPendingFiles([]);
     setInputText("");
+    setReplyingTo(null);
     prevMsgCountRef.current = 0;
     fetchHistory(conv.id);
     markAsRead(conv.id);
@@ -285,15 +348,21 @@ const ChatPage = () => {
   }, [searchKeyword]);
 
   // ========== Pending files (preview) ==========
-  const addPendingFiles = (files: FileList | File[]) => {
-    const newPending: PendingFile[] = Array.from(files).map((file) => {
-      const isImage = file.type.startsWith("image/");
-      return {
-        file,
-        previewUrl: isImage ? URL.createObjectURL(file) : null,
-        isImage,
-      };
-    });
+  const addPendingFiles = async (files: FileList | File[]) => {
+    const newPending: PendingFile[] = await Promise.all(
+      Array.from(files).map(async (file) => {
+        const heic = isHeicFile(file);
+        const isImage = file.type.startsWith("image/") || heic;
+        const isVideo = file.type.startsWith("video/");
+        let previewUrl: string | null = null;
+        if (heic) {
+          previewUrl = await convertHeicToPreviewUrl(file);
+        } else if (isImage || isVideo) {
+          previewUrl = URL.createObjectURL(file);
+        }
+        return { file, previewUrl, isImage };
+      })
+    );
     setPendingFiles((prev) => [...prev, ...newPending]);
   };
 
@@ -320,16 +389,89 @@ const ChatPage = () => {
     if (!hasText && !hasFiles) return;
 
     const receiverId = selectedConv.id;
+    const textToSend = inputText.trim();
+    const filesToSend = [...pendingFiles];
+    const replyId = replyingTo?.id ?? null;
+    const replyObj: IReplyToMessage | null = replyingTo
+      ? {
+          id: replyingTo.id,
+          user_id: replyingTo.user_id,
+          user_name: replyingTo.sender_name,
+          message: replyingTo.message,
+          message_type: replyingTo.message_type,
+          created_at: replyingTo.created_at,
+        }
+      : null;
+
+    // Optimistic update: clear input + add bubble ngay lập tức
+    if (hasText) {
+      setInputText("");
+      const textOptId = Date.now();
+      optimisticIdsRef.current.add(textOptId);
+      const optimisticMsg: IChatMessage = {
+        id: textOptId,
+        user_id: currentUserId!,
+        message: textToSend,
+        message_type: "text",
+        sender_name: "",
+        sender_avatar: null,
+        receiver_id: receiverId,
+        receiver_name: "",
+        receiver_avatar: null,
+        file_url: null,
+        file_name: null,
+        file_type: null,
+        file_size: null,
+        chat_type: "private",
+        reply_to_message_id: replyId,
+        reply_to_message: replyObj,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, optimisticMsg]);
+    }
+    if (hasFiles) {
+      // Clear pending UI ngay (không revoke blob URLs vì dùng cho optimistic messages)
+      setPendingFiles([]);
+      const optimisticFileMsgs: IChatMessage[] = filesToSend.map((pending, i) => {
+        const isVideo = pending.file.type.startsWith("video/");
+        const msgType = pending.isImage ? "image" : isVideo ? "video" : "file";
+        const fileOptId = Date.now() + i + 1;
+        optimisticIdsRef.current.add(fileOptId);
+        return {
+          id: fileOptId,
+          user_id: currentUserId!,
+          message: "",
+          message_type: msgType,
+          sender_name: "",
+          sender_avatar: null,
+          receiver_id: receiverId,
+          receiver_name: "",
+          receiver_avatar: null,
+          file_url: pending.previewUrl,
+          file_name: pending.file.name,
+          file_type: pending.file.type,
+          file_size: null,
+          chat_type: "private",
+          reply_to_message_id: replyId,
+          reply_to_message: replyObj,
+          created_at: new Date().toISOString(),
+        } as IChatMessage;
+      });
+      setMessages((prev) => [...prev, ...optimisticFileMsgs]);
+    }
+    setReplyingTo(null);
+
     setSending(true);
     try {
       const token = getToken();
 
       // Gửi từng file riêng
       if (hasFiles) {
-        for (const pending of pendingFiles) {
+        for (const pending of filesToSend) {
           const formData = new FormData();
           formData.append("receiver_id", String(receiverId));
           formData.append("file", pending.file);
+          if (replyId) formData.append("reply_to_message_id", String(replyId));
           await fetch(`${BASE_URL}/chat/message`, {
             method: "POST",
             headers: {
@@ -339,14 +481,14 @@ const ChatPage = () => {
             body: formData,
           });
         }
-        clearPendingFiles();
       }
 
       // Gửi text nếu có
       if (hasText) {
         const formData = new FormData();
         formData.append("receiver_id", String(receiverId));
-        formData.append("message", inputText.trim());
+        formData.append("message", textToSend);
+        if (replyId) formData.append("reply_to_message_id", String(replyId));
         await fetch(`${BASE_URL}/chat/message`, {
           method: "POST",
           headers: {
@@ -355,7 +497,6 @@ const ChatPage = () => {
           },
           body: formData,
         });
-        setInputText("");
       }
 
       fetchHistorySilent(receiverId);
@@ -428,9 +569,13 @@ const ChatPage = () => {
   const formatMsgTime = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
-      return date.toLocaleTimeString("vi-VN", {
+      return date.toLocaleString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: "Asia/Tokyo",
       });
     } catch {
       return dateStr;
@@ -442,9 +587,10 @@ const ChatPage = () => {
     if (msg.file_type && msg.file_type.startsWith("image/")) return true;
     if (
       msg.file_name &&
-      /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(msg.file_name)
+      /\.(jpg|jpeg|png|gif|webp|bmp|svg|heic|heif)$/i.test(msg.file_name)
     )
       return true;
+    if (msg.file_url && isHeicUrl(msg.file_url)) return true;
     return false;
   };
 
@@ -644,12 +790,22 @@ const ChatPage = () => {
                       return (
                         <div
                           key={msg.id}
-                          className={`flex mb-[8px] ${
+                          className={`flex mb-[8px] group/msg items-end gap-[4px] ${
                             isMe ? "justify-end" : "justify-start"
                           }`}
                         >
+                          {/* Nút reply - bên trái bubble khi isMe */}
+                          {isMe && (
+                            <button
+                              onClick={() => setReplyingTo(msg)}
+                              className="opacity-0 group-hover/msg:opacity-100 transition-opacity w-[26px] h-[26px] rounded-full hover:bg-[#F0F0F0] flex justify-center items-center flex-shrink-0 mb-[18px]"
+                            >
+                              <Reply size={14} className="text-[#9E9E9E]" />
+                            </button>
+                          )}
+
                           {!isMe && (
-                            <div className="w-[32px] h-[32px] min-w-[32px] rounded-full bg-[#E6E6E6] flex justify-center items-center overflow-hidden mr-[8px] mt-auto">
+                            <div className="w-[32px] h-[32px] min-w-[32px] rounded-full bg-[#E6E6E6] flex justify-center items-center overflow-hidden mr-[4px] flex-shrink-0">
                               {msg.sender_avatar ? (
                                 <img
                                   src={msg.sender_avatar}
@@ -671,11 +827,47 @@ const ChatPage = () => {
                               isMe ? "items-end" : "items-start"
                             }`}
                           >
+                            {/* Reply quote block */}
+                            {msg.reply_to_message && (
+                              <div
+                                className={`px-[10px] pt-[6px] pb-[8px] rounded-t-[14px] rounded-b-none border-l-[3px] border-[#1572FF] w-full text-[12px] leading-[17px] ${
+                                  isMe
+                                    ? "bg-[#1058c7] text-white/80"
+                                    : "bg-[#DCDCDC] text-[#444]"
+                                }`}
+                              >
+                                <div className={`text-[11px] font-semibold mb-[2px] ${isMe ? "text-[#a8c8ff]" : "text-[#1572FF]"}`}>
+                                  {msg.reply_to_message.user_name || ""}
+                                </div>
+                                <div
+                                  className="overflow-hidden whitespace-pre-wrap break-words"
+                                  style={{
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                    maxWidth: "220px",
+                                  }}
+                                >
+                                  {msg.reply_to_message.message_type === "text"
+                                    ? msg.reply_to_message.message
+                                    : msg.reply_to_message.message_type === "image"
+                                    ? "🖼 Ảnh"
+                                    : msg.reply_to_message.message_type === "video"
+                                    ? "🎥 Video"
+                                    : "📎 File"}
+                                </div>
+                              </div>
+                            )}
                             {/* Text message */}
                             {msg.message_type === "text" && msg.message && (
                               <div
-                                className={`px-[12px] py-[8px] text-[14px] leading-[20px] break-words ${
-                                  isMe
+                                className={`px-[12px] py-[8px] text-[14px] leading-[20px] break-words whitespace-pre-wrap ${
+                                  msg.reply_to_message
+                                    ? isMe
+                                      ? "bg-[#1572FF] text-white rounded-b-[18px] rounded-br-[4px] rounded-t-none w-full"
+                                      : "bg-[#F0F0F0] text-[#212222] rounded-b-[18px] rounded-bl-[4px] rounded-t-none w-full"
+                                    : isMe
                                     ? "bg-[#1572FF] text-white rounded-[18px] rounded-br-[4px]"
                                     : "bg-[#F0F0F0] text-[#212222] rounded-[18px] rounded-bl-[4px]"
                                 }`}
@@ -694,28 +886,30 @@ const ChatPage = () => {
                                       : "rounded-bl-[4px]"
                                   }`}
                                 >
-                                  <img
-                                    src={msg.file_url}
-                                    alt={msg.file_name || "image"}
-                                    className="max-w-[250px] max-h-[200px] object-cover cursor-pointer"
-                                    onClick={() =>
-                                      window.open(msg.file_url!, "_blank")
-                                    }
-                                    onError={(e) => {
-                                      const img = e.target as HTMLImageElement;
-                                      // Thử sửa URL lặp storage/storage -> storage
-                                      if (
-                                        img.src.includes("/storage/storage/")
-                                      ) {
-                                        img.src = img.src.replace(
-                                          "/storage/storage/",
-                                          "/storage/",
-                                        );
-                                        return;
-                                      }
-                                      img.style.display = "none";
-                                    }}
-                                  />
+                                  {isHeicMsg(msg) ? (
+                                    <HeicImage
+                                      src={msg.file_url!}
+                                      alt={msg.file_name || "image"}
+                                      fileName={msg.file_name || undefined}
+                                      className="max-w-[250px] max-h-[200px] object-cover cursor-pointer"
+                                      onClick={() => window.open(msg.file_url!, "_blank")}
+                                    />
+                                  ) : (
+                                    <img
+                                      src={msg.file_url}
+                                      alt={msg.file_name || "image"}
+                                      className="max-w-[250px] max-h-[200px] object-cover cursor-pointer"
+                                      onClick={() => window.open(msg.file_url!, "_blank")}
+                                      onError={(e) => {
+                                        const img = e.target as HTMLImageElement;
+                                        if (img.src.includes("/storage/storage/")) {
+                                          img.src = img.src.replace("/storage/storage/", "/storage/");
+                                          return;
+                                        }
+                                        img.style.display = "none";
+                                      }}
+                                    />
+                                  )}
                                 </div>
                                 <div
                                   onClick={() =>
@@ -812,12 +1006,49 @@ const ChatPage = () => {
                               {formatMsgTime(msg.created_at)}
                             </span>
                           </div>
+
+                          {/* Nút reply - bên phải bubble khi !isMe */}
+                          {!isMe && (
+                            <button
+                              onClick={() => setReplyingTo(msg)}
+                              className="opacity-0 group-hover/msg:opacity-100 transition-opacity w-[26px] h-[26px] rounded-full hover:bg-[#F0F0F0] flex justify-center items-center flex-shrink-0 mb-[18px]"
+                            >
+                              <Reply size={14} className="text-[#9E9E9E]" />
+                            </button>
+                          )}
                         </div>
                       );
                     })
                   )}
                   <div ref={messagesEndRef} />
                 </div>
+
+                {/* Reply preview bar */}
+                {replyingTo && (
+                  <div className="px-[16px] py-[8px] border-t-[1px] border-[#E6E6E6] flex items-center gap-[10px] bg-[#F8F8F8]">
+                    <div className="w-[3px] h-full min-h-[32px] rounded-full bg-[#1572FF] flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-medium text-[#1572FF] mb-[1px]">
+                        {replyingTo.user_id === currentUserId ? "Bạn" : getConvName(selectedConv!)}
+                      </div>
+                      <div className="text-[12px] text-[#666] truncate">
+                        {replyingTo.message_type === "text"
+                          ? replyingTo.message
+                          : replyingTo.message_type === "image"
+                          ? "Ảnh"
+                          : replyingTo.message_type === "video"
+                          ? "Video"
+                          : replyingTo.file_name || "File"}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setReplyingTo(null)}
+                      className="w-[24px] h-[24px] rounded-full hover:bg-[#E0E0E0] flex justify-center items-center flex-shrink-0"
+                    >
+                      <X size={14} className="text-[#9E9E9E]" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Preview pending files */}
                 {pendingFiles.length > 0 && (
@@ -863,7 +1094,7 @@ const ChatPage = () => {
                   <input
                     ref={imageInputRef}
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*,video/*,.heic,.heif"
                     multiple
                     className="hidden"
                     onClick={(e) => {
@@ -895,7 +1126,6 @@ const ChatPage = () => {
                     autoSize={{ minRows: 1, maxRows: 4 }}
                     className="flex-1 rounded-[20px] bg-[#F5F5F5] text-[14px] border-none resize-none"
                     style={{ padding: "8px 16px" }}
-                    disabled={sending}
                   />
                   <div
                     onClick={handleSendMessage}

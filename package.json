@@ -39,6 +39,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "heic2any": "^0.0.4",
     "html-react-parser": "^5.1.10",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",

@@ -11,6 +11,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
   pending: { label: "Chờ xử lý", color: "#D97706", bg: "#FEF3C7" },
   confirmed: { label: "Đã xác nhận", color: "#2563EB", bg: "#DBEAFE" },
   processing: { label: "Đang xử lý", color: "#7C3AED", bg: "#EDE9FE" },
+  waiting_order: { label: "Hàng order", color: "#B45309", bg: "#FEF9C3" },
   shipping: { label: "Đang giao", color: "#0891B2", bg: "#CFFAFE" },
   delivered: { label: "Đã giao", color: "#059669", bg: "#D1FAE5" },
   completed: { label: "Hoàn thành", color: "#16A34A", bg: "#DCFCE7" },
@@ -25,7 +26,7 @@ const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string; bg: str
   refunded: { label: "Hoàn tiền", color: "#9333EA", bg: "#F3E8FF" },
 };
 
-const ALL_STATUSES = ["pending", "confirmed", "processing", "shipping", "delivered", "completed", "cancelled", "refunded"];
+const ALL_STATUSES = ["pending", "confirmed", "processing", "waiting_order", "shipping", "delivered", "completed", "cancelled", "refunded"];
 
 const OrderDetail = () => {
   const router = useRouter();
@@ -34,6 +35,7 @@ const OrderDetail = () => {
 
   const [order, setOrder] = useState<IOrderDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   // Modal đổi trạng thái đơn hàng
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -354,8 +356,8 @@ const OrderDetail = () => {
                   <img
                     src={order.payment_receipt}
                     alt="Ảnh thanh toán"
-                    className="w-[120px] h-[120px] object-cover rounded-[8px] cursor-pointer border border-[#E5E5E5]"
-                    onClick={() => window.open(order.payment_receipt!, "_blank")}
+                    className="w-[120px] h-[120px] object-cover rounded-[8px] cursor-pointer border border-[#E5E5E5] hover:opacity-90 transition-opacity"
+                    onClick={() => setLightboxUrl(order.payment_receipt!)}
                   />
                 </div>
               )}
@@ -577,6 +579,27 @@ const OrderDetail = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Lightbox ảnh thanh toán */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[2000] flex justify-center items-center bg-black/80"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img
+            src={lightboxUrl}
+            alt="Ảnh thanh toán"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-[8px] shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-[20px] right-[24px] w-[36px] h-[36px] rounded-full bg-white/20 hover:bg-white/40 flex justify-center items-center cursor-pointer text-white text-[20px] transition-all"
+          >
+            ×
+          </div>
+        </div>
+      )}
 
       {/* Modal đổi trạng thái thanh toán */}
       <Modal

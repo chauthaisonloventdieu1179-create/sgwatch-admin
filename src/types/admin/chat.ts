@@ -38,6 +38,15 @@ export interface IConversationsResponse {
   };
 }
 
+export interface IReplyToMessage {
+  id: number;
+  user_id: number;
+  user_name: string;
+  message: string | null;
+  message_type: string;
+  created_at: string;
+}
+
 export interface IChatMessage {
   id: number;
   message: string | null;
@@ -54,7 +63,7 @@ export interface IChatMessage {
   file_size: number | null;
   chat_type: string;
   reply_to_message_id: number | null;
-  reply_to_message: string | null;
+  reply_to_message: IReplyToMessage | null;
   created_at: string;
 }
 

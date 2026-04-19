@@ -9,7 +9,8 @@
       "Bash(done)",
       "Bash(npx tsc --noEmit --pretty)",
       "Bash(npm install pusher-js)",
-      "Bash(taskkill //F //IM \"node.exe\")"
+      "Bash(taskkill //F //IM \"node.exe\")",
+      "Bash(npm install heic2any --legacy-peer-deps)"
     ]
   }
 }

@@ -3,7 +3,7 @@ import { getToken } from "@/api/ServerActions";
 import Pagination from "@/components/pagination/pagination";
 import { IBanner, IBannersResponse } from "@/types/admin/users";
 import { sendRequest } from "@/utils/api";
-import { Input, Spin, message } from "antd";
+import { Input, InputNumber, Spin, message } from "antd";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import ConfirmDelete from "@/components/popup/popup.delete";
@@ -60,6 +60,7 @@ const BannerList = () => {
   const [uploading, setUploading] = useState(false);
   const [editBannerId, setEditBannerId] = useState<number | null>(null);
   const [uploadLink, setUploadLink] = useState<string>("");
+  const [uploadSortOrder, setUploadSortOrder] = useState<number | null>(null);
   const [cacheKey, setCacheKey] = useState(Date.now());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,6 +97,7 @@ const BannerList = () => {
     setUploadFile(null);
     setUploadPreview(null);
     setUploadLink("");
+    setUploadSortOrder(null);
     setShowUploadModal(true);
   };
 
@@ -105,6 +107,7 @@ const BannerList = () => {
     setUploadFile(null);
     setUploadPreview(banner?.media_url || null);
     setUploadLink(banner?.link || "");
+    setUploadSortOrder(banner?.sort_order ?? null);
     setShowUploadModal(true);
   };
 
@@ -128,6 +131,7 @@ const BannerList = () => {
       const formData = new FormData();
       if (uploadFile) formData.append("media", uploadFile);
       if (uploadLink) formData.append("link", uploadLink);
+      if (uploadSortOrder !== null) formData.append("sort_order", String(uploadSortOrder));
 
       const url = editBannerId
         ? `${BASE_URL}/admin/banners/${editBannerId}`
@@ -169,6 +173,7 @@ const BannerList = () => {
     setUploadFile(null);
     setUploadPreview(null);
     setUploadLink("");
+    setUploadSortOrder(null);
     setEditBannerId(null);
   };
 
@@ -360,6 +365,16 @@ const BannerList = () => {
                 onChange={(e) => setUploadLink(e.target.value)}
                 placeholder="Nhập link (tuỳ chọn)"
                 className="h-[36px] w-full text-[13px] mt-[6px]"
+              />
+            </div>
+            <div>
+              <label className="text-[13px] font-[400] text-[#212222]">Thứ tự hiển thị</label>
+              <InputNumber
+                value={uploadSortOrder}
+                onChange={(val) => setUploadSortOrder(val)}
+                placeholder="Nhập thứ tự (tuỳ chọn)"
+                className="h-[36px] w-full text-[13px] mt-[6px]"
+                min={0}
               />
             </div>
             <div className="flex justify-end gap-[10px]">
