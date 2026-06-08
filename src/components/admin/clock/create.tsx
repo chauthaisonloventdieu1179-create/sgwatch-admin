@@ -259,13 +259,17 @@ const Create = ({
     setExistingPrimaryImage("");
   };
 
+  const isVideoFile = (file: File) => file.type.startsWith("video/");
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const compressed = await Promise.all(
-        Array.from(files).map((file) => compressImage(file)),
+      const processed = await Promise.all(
+        Array.from(files).map((file) =>
+          isVideoFile(file) ? file : compressImage(file),
+        ),
       );
-      setImages((prev) => [...prev, ...compressed]);
+      setImages((prev) => [...prev, ...processed]);
     }
   };
 
@@ -720,14 +724,22 @@ const Create = ({
                             key={index}
                             className="relative w-[100px] h-[100px] rounded-[8px] overflow-hidden border-2 border-[#C8C8C8]"
                           >
-                            <Image
-                              src={URL.createObjectURL(img)}
-                              width={100}
-                              height={100}
-                              className="object-cover w-full h-full"
-                              alt="new"
-                              unoptimized={true}
-                            />
+                            {isVideoFile(img) ? (
+                              <video
+                                src={URL.createObjectURL(img)}
+                                className="object-cover w-full h-full"
+                                muted
+                              />
+                            ) : (
+                              <Image
+                                src={URL.createObjectURL(img)}
+                                width={100}
+                                height={100}
+                                className="object-cover w-full h-full"
+                                alt="new"
+                                unoptimized={true}
+                              />
+                            )}
                             <button
                               onClick={() => removeNewImage(index)}
                               className="absolute top-1 right-1 bg-red-500 text-white w-[20px] h-[20px] rounded-full text-[10px] flex items-center justify-center"
@@ -742,7 +754,7 @@ const Create = ({
                     <div className="mt-[10px]">
                       <label
                         htmlFor="clock-images"
-                        className="w-[130px] h-[32px] bg-[#212222] cursor-pointer rounded-[10px] text-white font-medium text-[12px] flex justify-center items-center gap-[5px] hover:scale-105 transition-all duration-200"
+                        className="w-[160px] h-[32px] bg-[#212222] cursor-pointer rounded-[10px] text-white font-medium text-[12px] flex justify-center items-center gap-[5px] hover:scale-105 transition-all duration-200"
                       >
                         <Image
                           src="/epack/icon_plus.svg"
@@ -751,12 +763,12 @@ const Create = ({
                           height={6}
                           style={{ objectFit: "cover" }}
                         />
-                        Chọn hình ảnh
+                        Chọn ảnh / video
                       </label>
                       <input
                         id="clock-images"
                         type="file"
-                        accept="image/*"
+                        accept="image/*,video/*"
                         multiple
                         onClick={(e) => {
                           (e.target as HTMLInputElement).value = "";

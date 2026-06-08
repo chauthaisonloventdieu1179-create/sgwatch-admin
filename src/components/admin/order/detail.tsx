@@ -28,6 +28,20 @@ const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string; bg: str
 
 const ALL_STATUSES = ["pending", "confirmed", "processing", "waiting_order", "shipping", "delivered", "completed", "cancelled", "refunded"];
 
+const parseVnAddress = (address: string) => {
+  const parts = address.split(", ");
+  if (parts.length >= 4) {
+    const provinceCode = parts[parts.length - 1];
+    const wardCode = parts[parts.length - 2];
+    const wardName = parts[parts.length - 3];
+    const detailAddress = parts.slice(0, parts.length - 3).join(", ");
+    if (/^\d+$/.test(provinceCode) && /^\d+$/.test(wardCode)) {
+      return { detailAddress, wardName, wardCode, provinceCode };
+    }
+  }
+  return null;
+};
+
 const OrderDetail = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -36,6 +50,7 @@ const OrderDetail = () => {
   const [order, setOrder] = useState<IOrderDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [provinceName, setProvinceName] = useState<string | null>(null);
 
   // Modal đổi trạng thái đơn hàng
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -48,6 +63,16 @@ const OrderDetail = () => {
   useEffect(() => {
     if (orderId) fetchOrder();
   }, [orderId]);
+
+  useEffect(() => {
+    if (!order || order.shipping_country !== "VN") return;
+    const code = order.shipping_city;
+    if (!code || !/^\d+$/.test(code)) return;
+    fetch(`https://provinces.open-api.vn/api/v2/p/${code}`)
+      .then((res) => res.json())
+      .then((data) => setProvinceName(data.name))
+      .catch(() => {});
+  }, [order]);
 
   const fetchOrder = async () => {
     try {
@@ -427,18 +452,56 @@ const OrderDetail = () => {
                   <span className="text-[#9E9E9E] w-[80px]">SĐT:</span>
                   <span>{order.shipping_phone}</span>
                 </div>
-                <div className="flex gap-[8px]">
-                  <span className="text-[#9E9E9E] w-[80px]">Địa chỉ:</span>
-                  <span>{order.shipping_address}</span>
-                </div>
-                <div className="flex gap-[8px]">
-                  <span className="text-[#9E9E9E] w-[80px]">Thành phố:</span>
-                  <span>{order.shipping_city}</span>
-                </div>
-                <div className="flex gap-[8px]">
-                  <span className="text-[#9E9E9E] w-[80px]">Mã bưu điện:</span>
-                  <span>{order.shipping_postal_code}</span>
-                </div>
+                {(() => {
+                  const vnParsed = order.shipping_country === "VN" ? parseVnAddress(order.shipping_address) : null;
+                  if (vnParsed) {
+                    return (
+                      <>
+                        <div className="flex gap-[8px]">
+                          <span className="text-[#9E9E9E] w-[80px]">Địa chỉ:</span>
+                          <span>{vnParsed.detailAddress || "—"}</span>
+                        </div>
+                        <div className="flex gap-[8px]">
+                          <span className="text-[#9E9E9E] w-[80px]">Phường/Xã:</span>
+                          <span>{vnParsed.wardName}</span>
+                        </div>
+                        <div className="flex gap-[8px]">
+                          <span className="text-[#9E9E9E] w-[80px]">Tỉnh/TP:</span>
+                          <span>{provinceName || vnParsed.provinceCode}</span>
+                        </div>
+                      </>
+                    );
+                  }
+                  return (
+                    <>
+                      <div className="flex gap-[8px]">
+                        <span className="text-[#9E9E9E] w-[80px]">Địa chỉ:</span>
+                        <span>{order.shipping_address}</span>
+                      </div>
+                      <div className="flex gap-[8px]">
+                        <span className="text-[#9E9E9E] w-[80px]">Thành phố:</span>
+                        <span>{order.shipping_city}</span>
+                      </div>
+                    </>
+                  );
+                })()}
+                {order.shipping_postal_code && (
+                  <div className="flex gap-[8px]">
+                    <span className="text-[#9E9E9E] w-[80px]">Mã bưu điện:</span>
+                    <span>{order.shipping_postal_code}</span>
+                  </div>
+                )}
+                {order.shipping_address_image && (
+                  <div className="flex gap-[8px]">
+                    <span className="text-[#9E9E9E] w-[80px]">Ảnh địa chỉ:</span>
+                    <img
+                      src={order.shipping_address_image}
+                      alt="Ảnh địa chỉ"
+                      className="w-[120px] h-[120px] object-cover rounded-[8px] cursor-pointer border border-[#E5E5E5] hover:opacity-90 transition-opacity"
+                      onClick={() => setLightboxUrl(order.shipping_address_image!)}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

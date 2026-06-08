@@ -60,7 +60,8 @@ export interface IOrderDetail {
   shipping_address: string;
   shipping_city: string;
   shipping_country: string;
-  shipping_postal_code: string;
+  shipping_postal_code: string | null;
+  shipping_address_image: string | null;
   note: string | null;
   tracking_number: string | null;
   shipping_carrier: string | null;
